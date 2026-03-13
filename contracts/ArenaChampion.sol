@@ -1,39 +1,53 @@
-// ERC-721 NFT with unique stats and rarity
-pragma solidity ^0.8.20;
-import "@openzeppelin/contracts/token/ERC721/extensions/ERC721Enumerable.sol";
-import "@openzeppelin/contracts/access/Ownable.sol";
+// SPDX-License-Identifier: MIT
+pragma solidity ^0.8.25;
 
-contract ArenaChampion is ERC721Enumerable, Ownable {
-    struct Champion {
-        uint256 attack;
-        uint256 defense;
-        uint8 rarity;
-    }
+struct Champion {
+    uint256 attack;
+    uint256 defense;
+    uint8 rarity;
+}
+
+contract ArenaChampion {
+    string public name = "ArenaChampion";
+    string public symbol = "CHAMP";
+    uint256 public nextTokenId;
+
+    mapping(uint256 => address) private _owners;
     mapping(uint256 => Champion) public champions;
-    uint256 public nextId = 1;
+    mapping(uint256 => address) private _tokenApprovals;
 
-    constructor() ERC721("ArenaChampion", "ACHAMP") {}
-
-    function mint(address to) external onlyOwner returns (uint256) {
-        uint256 tokenId = nextId;
-        _mint(to, tokenId);
-
-        uint256 attack = (uint256(keccak256(abi.encodePacked(block.timestamp, tokenId))) % 50) + 50;
-        uint256 defense = (uint256(keccak256(abi.encodePacked(block.difficulty, tokenId))) % 50) + 50;
-
-        uint8 rarity;
-        uint256 rand = uint256(keccak256(abi.encodePacked(block.timestamp, msg.sender, tokenId))) % 100;
-        if(rand < 50) rarity = 1;
-        else if(rand < 75) rarity = 2;
-        else if(rand < 90) rarity = 3;
-        else rarity = 4;
-
+    function mintChampion(address to, uint256 attack, uint256 defense, uint8 rarity) external {
+        uint256 tokenId = nextTokenId++;
+        _owners[tokenId] = to;
         champions[tokenId] = Champion(attack, defense, rarity);
-        nextId += 1;
-        return tokenId;
+    }
+
+    function ownerOf(uint256 tokenId) external view returns (address) {
+        return _owners[tokenId];
     }
 
     function getChampion(uint256 tokenId) external view returns (Champion memory) {
         return champions[tokenId];
+    }
+
+    function approve(address to, uint256 tokenId) external {
+        require(msg.sender == _owners[tokenId], "Not owner");
+        _tokenApprovals[tokenId] = to;
+    }
+
+    function transferFrom(address from, address to, uint256 tokenId) external {
+        require(msg.sender == _owners[tokenId] || msg.sender == _tokenApprovals[tokenId], "Not authorized");
+        _owners[tokenId] = to;
+        _tokenApprovals[tokenId] = address(0);
+    }
+
+    function tokenOfOwnerByIndex(address owner, uint256 index) external view returns (uint256) {
+        for (uint256 i = 0; i < nextTokenId; i++) {
+            if (_owners[i] == owner) {
+                if (index == 0) return i;
+                else index--;
+            }
+        }
+        revert("Owner index out of bounds");
     }
 }
