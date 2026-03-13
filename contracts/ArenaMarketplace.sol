@@ -1,41 +1,50 @@
-// NFT Marketplace
-pragma solidity ^0.8.20;
-import "./ArenaCoin.sol";
-import "./ArenaChampion.sol";
-import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
+// SPDX-License-Identifier: MIT
+pragma solidity ^0.8.25;
 
-contract ArenaMarketplace is ReentrancyGuard {
-    ArenaCoin public arenaCoin;
-    ArenaChampion public arenaChampion;
-    uint256 public listingFee = 1 * 1e18;
+interface IArenaCoin {
+    function transferFrom(address from, address to, uint256 amount) external returns (bool);
+}
 
-    struct Listing { address seller; uint256 tokenId; uint256 price; bool active; }
+interface IArenaChampion {
+    function ownerOf(uint256 tokenId) external view returns (address);
+    function approve(address to, uint256 tokenId) external;
+    function transferFrom(address from, address to, uint256 tokenId) external;
+}
+
+contract ArenaMarketplace {
+    IArenaChampion public champions;
+    IArenaCoin public arenaToken;
+
+    struct Listing {
+        address seller;
+        uint256 tokenId;
+        uint256 price;
+        bool active;
+    }
+
+    uint256 public listingCounter;
     mapping(uint256 => Listing) public listings;
 
-    event Listed(address seller, uint256 tokenId, uint256 price);
-    event Sold(address buyer, uint256 tokenId, uint256 price);
-
-    constructor(ArenaCoin _arenaCoin, ArenaChampion _arenaChampion) {
-        arenaCoin = _arenaCoin;
-        arenaChampion = _arenaChampion;
+    constructor(address _champions, address _arenaToken) {
+        champions = IArenaChampion(_champions);
+        arenaToken = IArenaCoin(_arenaToken);
     }
 
     function listNFT(uint256 tokenId, uint256 price) external {
-        require(arenaChampion.ownerOf(tokenId) == msg.sender, "Not owner");
-        listings[tokenId] = Listing(msg.sender, tokenId, price, true);
-        emit Listed(msg.sender, tokenId, price);
+        require(champions.ownerOf(tokenId) == msg.sender, "Not your NFT");
+        champions.approve(address(this), tokenId);
+
+        listings[listingCounter] = Listing(msg.sender, tokenId, price, true);
+        listingCounter++;
     }
 
-    function buyNFT(uint256 tokenId) external nonReentrant {
-        Listing memory listing = listings[tokenId];
-        require(listing.active, "Not for sale");
+    function buyNFT(uint256 listingId) external {
+        Listing storage lst = listings[listingId];
+        require(lst.active, "Listing inactive");
 
-        arenaCoin.transferFrom(msg.sender, listing.seller, listing.price);
-        arenaChampion.transferFrom(listing.seller, msg.sender, tokenId);
-        listings[tokenId].active = false;
+        arenaToken.transferFrom(msg.sender, lst.seller, lst.price);
+        champions.transferFrom(lst.seller, msg.sender, lst.tokenId);
 
-        emit Sold(msg.sender, tokenId, listing.price);
+        lst.active = false;
     }
-
-    function setListingFee(uint256 fee) external { listingFee = fee; }
 }
