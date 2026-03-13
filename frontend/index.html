@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Base Battle Arena</title>
+</head>
+<body>
+<h1>Base Battle Arena</h1>
+<button id="connect">Connect Wallet</button>
+<button id="balance">Check ARENA Balance</button>
+<button id="battle">Enter PvE Battle</button>
+<br><br>
+<h2>PvP Battle</h2>
+<input id="myNFT" placeholder="Your NFT ID">
+<input id="opponentNFT" placeholder="Opponent NFT ID">
+<input id="opponentAddr" placeholder="Opponent Address">
+<button id="pvpBattle">Start PvP Battle</button>
+<br><br>
+<h2>Marketplace</h2>
+<input id="listNFT" placeholder="NFT ID">
+<input id="listPrice" placeholder="Price in ARENA">
+<button id="listBtn">List NFT</button>
+<input id="buyNFTId" placeholder="NFT ID">
+<button id="buyBtn">Buy NFT</button>
+
+<script src="https://cdn.jsdelivr.net/npm/ethers@6.9.0/dist/ethers.min.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
