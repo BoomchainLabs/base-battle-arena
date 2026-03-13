@@ -1,39 +1,44 @@
-// PvE Battle contract
-pragma solidity ^0.8.20;
-import "./ArenaCoin.sol";
-import "./ArenaChampion.sol";
-import "@openzeppelin/contracts/access/Ownable.sol";
+// SPDX-License-Identifier: MIT
+pragma solidity ^0.8.25;
 
-contract ArenaBattle is Ownable {
-    ArenaCoin public arenaCoin;
-    ArenaChampion public arenaChampion;
+struct Champion {
+    uint256 attack;
+    uint256 defense;
+    uint8 rarity;
+}
+
+interface IArenaCoin {
+    function balanceOf(address owner) external view returns (uint256);
+    function transferFrom(address from, address to, uint256 amount) external returns (bool);
+    function transfer(address to, uint256 amount) external returns (bool);
+}
+
+interface IArenaChampion {
+    function tokenOfOwnerByIndex(address owner, uint256 index) external view returns (uint256);
+    function getChampion(uint256 tokenId) external view returns (Champion memory);
+}
+
+contract ArenaBattle {
+    IArenaCoin public arenaToken;
+    IArenaChampion public champions;
     uint256 public entryFee = 10 * 10 ** 18;
 
     event BattleResult(address indexed player, uint256 reward, uint256 nftId, uint256 attack, uint256 defense, uint8 rarity);
 
-    constructor(ArenaCoin _arenaCoin, ArenaChampion _arenaChampion) {
-        arenaCoin = _arenaCoin;
-        arenaChampion = _arenaChampion;
+    constructor(address _arenaToken, address _champions) {
+        arenaToken = IArenaCoin(_arenaToken);
+        champions = IArenaChampion(_champions);
     }
 
     function enterBattle() external {
-        require(arenaCoin.balanceOf(msg.sender) >= entryFee, "Not enough ARENA");
-        arenaCoin.transferFrom(msg.sender, address(this), entryFee);
+        require(arenaToken.balanceOf(msg.sender) >= entryFee, "Insufficient ARENA");
+        arenaToken.transferFrom(msg.sender, address(this), entryFee);
 
-        uint256 nftId = arenaChampion.mint(msg.sender);
-        ArenaChampion.Champion memory champ = arenaChampion.getChampion(nftId);
+        uint256 reward = entryFee * 2;
+        uint256 nftId = champions.tokenOfOwnerByIndex(msg.sender, 0);
+        (Champion memory champ) = champions.getChampion(nftId);
 
-        uint256 reward = (champ.attack + champ.defense) * champ.rarity * 1e16;
-        arenaCoin.transfer(msg.sender, reward);
-
+        arenaToken.transfer(msg.sender, reward);
         emit BattleResult(msg.sender, reward, nftId, champ.attack, champ.defense, champ.rarity);
-    }
-
-    function withdrawArena(uint256 amount) external onlyOwner {
-        arenaCoin.transfer(msg.sender, amount);
-    }
-
-    function setEntryFee(uint256 fee) external onlyOwner {
-        entryFee = fee;
     }
 }
