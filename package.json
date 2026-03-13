@@ -1,0 +1,15 @@
+{
+  "name": "base-battle-arena",
+  "version": "1.0.0",
+  "scripts": {
+    "compile": "npx hardhat compile",
+    "deploy": "npx hardhat run scripts/deploy.js --network base"
+  },
+  "devDependencies": {
+    "ethers": "^6.9.0",
+    "hardhat": "^2.16.0",
+    "@nomiclabs/hardhat-ethers": "^3.2.0",
+    "@openzeppelin/contracts": "^5.1.0",
+    "dotenv": "^16.3.1"
+  }
+}
