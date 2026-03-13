@@ -1,29 +1,88 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-<meta charset="UTF-8">
-<title>Base Battle Arena</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Base Battle Arena</title>
+  <style>
+    body { font-family: Arial, sans-serif; padding: 20px; background: #f0f2f5; }
+    h1 { color: #2c3e50; }
+    section { margin-bottom: 30px; padding: 15px; background: #fff; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+    button { margin: 5px 0; padding: 10px 15px; background: #1e90ff; color: white; border: none; border-radius: 5px; cursor: pointer; }
+    button:hover { background: #0c7cd5; }
+    input { padding: 8px; margin-right: 10px; border-radius: 5px; border: 1px solid #ccc; width: 100px; }
+  </style>
 </head>
 <body>
-<h1>Base Battle Arena</h1>
-<button id="connect">Connect Wallet</button>
-<button id="balance">Check ARENA Balance</button>
-<button id="battle">Enter PvE Battle</button>
-<br><br>
-<h2>PvP Battle</h2>
-<input id="myNFT" placeholder="Your NFT ID">
-<input id="opponentNFT" placeholder="Opponent NFT ID">
-<input id="opponentAddr" placeholder="Opponent Address">
-<button id="pvpBattle">Start PvP Battle</button>
-<br><br>
-<h2>Marketplace</h2>
-<input id="listNFT" placeholder="NFT ID">
-<input id="listPrice" placeholder="Price in ARENA">
-<button id="listBtn">List NFT</button>
-<input id="buyNFTId" placeholder="NFT ID">
-<button id="buyBtn">Buy NFT</button>
 
-<script src="https://cdn.jsdelivr.net/npm/ethers@6.9.0/dist/ethers.min.js"></script>
-<script src="app.js"></script>
+  <h1>🎮 Base Battle Arena</h1>
+
+  <!-- Wallet -->
+  <section>
+    <h2>Wallet</h2>
+    <button onclick="connectWallet()">Connect Wallet</button>
+    <button onclick="getArenaBalance()">Check ARENA Balance</button>
+    <p id="walletAddress"></p>
+    <p id="arenaBalance"></p>
+  </section>
+
+  <!-- PvE Battle -->
+  <section>
+    <h2>PvE Battle</h2>
+    <button onclick="enterPvEBattle()">Enter PvE Battle</button>
+  </section>
+
+  <!-- PvP Battle -->
+  <section>
+    <h2>PvP Battle</h2>
+    <input type="number" id="myChampionId" placeholder="My NFT ID" />
+    <input type="number" id="challengeId" placeholder="Challenge ID" />
+    <button onclick="createChallenge(Number(document.getElementById('myChampionId').value))">Create Challenge</button>
+    <button onclick="acceptChallenge(Number(document.getElementById('challengeId').value), Number(document.getElementById('myChampionId').value))">Accept Challenge</button>
+  </section>
+
+  <!-- NFT Marketplace -->
+  <section>
+    <h2>NFT Marketplace</h2>
+    <input type="number" id="listTokenId" placeholder="NFT ID" />
+    <input type="text" id="listPrice" placeholder="Price (ARENA)" />
+    <button onclick="listNFT(Number(document.getElementById('listTokenId').value), document.getElementById('listPrice').value)">List NFT</button>
+    <input type="number" id="buyTokenId" placeholder="NFT ID to Buy" />
+    <button onclick="buyNFT(Number(document.getElementById('buyTokenId').value))">Buy NFT</button>
+  </section>
+
+  <!-- My NFTs -->
+  <section>
+    <h2>My NFTs</h2>
+    <button onclick="getOwnedNFTs()">Load My NFTs</button>
+    <pre id="myNFTs"></pre>
+  </section>
+
+  <script type="module">
+    import * as app from './app.js';
+
+    window.connectWallet = async () => {
+      await app.connectWallet();
+      const addr = await app.signer?.getAddress();
+      document.getElementById('walletAddress').innerText = `Connected: ${addr}`;
+    };
+
+    window.getArenaBalance = async () => {
+      const balance = await app.getArenaBalance();
+      document.getElementById('arenaBalance').innerText = `ARENA Balance: ${balance}`;
+    };
+
+    window.enterPvEBattle = app.enterPvEBattle;
+    window.createChallenge = app.createChallenge;
+    window.acceptChallenge = app.acceptChallenge;
+    window.listNFT = app.listNFT;
+    window.buyNFT = app.buyNFT;
+
+    window.getOwnedNFTs = async () => {
+      const nfts = await app.getOwnedNFTs();
+      document.getElementById('myNFTs').innerText = JSON.stringify(nfts, null, 2);
+    };
+  </script>
+
 </body>
 </html>
